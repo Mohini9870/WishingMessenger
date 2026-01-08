@@ -16,12 +16,6 @@ export default function TabsLayout() {
     if (token && !user) {
       dispatch(fetchMe());
     }
-
-    // ❌ Token hi nahi → login bhejo
-    if (!token) {
-      dispatch(logout());
-      router.replace("/login");
-    }
   }, [token]);
 
   // ⏳ Jab tak user load ho raha hai

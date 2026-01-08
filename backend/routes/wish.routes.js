@@ -3,9 +3,13 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 import Wish from "../models/wish.model.js";
-
+import authMiddleware from "../middlewares/auth.middleware.js"
+import {
+  createWish,
+  getMyWishes,
+} from "../controllers/wish.controller.js";
 import multer from "multer";
-import path from "path";
+
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -78,5 +82,8 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
+router.post("/", authMiddleware, createWish);   // 🔐
+router.get("/", authMiddleware, getMyWishes);
 
 export default router;

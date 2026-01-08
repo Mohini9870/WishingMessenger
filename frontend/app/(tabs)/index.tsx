@@ -25,7 +25,7 @@ export default function Home() {
 
   const handleLogout = () => {
     dispatch(logout());
-    router.replace("/login");
+   
   };
 
   if (loading) {
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   logoutBtn: {
     backgroundColor: "#EF4444",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },

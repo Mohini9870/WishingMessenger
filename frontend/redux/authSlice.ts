@@ -63,9 +63,12 @@ const authSlice = createSlice({
   initialState: {
     user: null as any,
     token: null as string | null,
-    loading: true,
+    loading: false,
   },
   reducers: {
+    setToken : (state, action)=>{
+      state.token = action.payload;
+    },
     tokenRestored: (state, action) => {
       state.token = action.payload;
       state.loading = false;
@@ -112,7 +115,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, tokenRestored } = authSlice.actions;
+export const { logout, tokenRestored, setToken } = authSlice.actions;
 export default authSlice.reducer;
 
 
