@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { sendOtpEmail } from "../config/mail.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+
 
 const router = express.Router();
 
@@ -87,6 +89,21 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Login failed" });
   }
 });
+
+/* ======================
+   GET LOGGED IN USER
+====================== */
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      user: req.user,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch user" });
+  }
+});
+
 
 export default router;
 

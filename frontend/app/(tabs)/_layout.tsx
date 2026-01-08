@@ -1,27 +1,42 @@
-import { Tabs } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Tabs, router } from "expo-router";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMe, logout } from "@/redux/authSlice";
+import { RootState, AppDispatch } from "@/redux/store";
+import { ActivityIndicator, View } from "react-native";
 
-export default function TabLayout() {
+export default function TabsLayout() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { token, user, loading } = useSelector(
+    (state: RootState) => state.auth
+  );
+
+  useEffect(() => {
+    // 🔐 Token hai but user nahi → backend se profile lao
+    if (token && !user) {
+      dispatch(fetchMe());
+    }
+
+    // ❌ Token hi nahi → login bhejo
+    if (!token) {
+      dispatch(logout());
+      router.replace("/login");
+    }
+  }, [token]);
+
+  // ⏳ Jab tak user load ho raha hai
+  if (loading || (token && !user)) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={22} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="time" size={22} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="add" />
     </Tabs>
-  )
+  );
 }
