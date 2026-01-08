@@ -65,12 +65,26 @@ export const addWish = createAsyncThunk<
 
 
 export const fetchWishes = createAsyncThunk<
-  Wish[],      // return type
-  void
->("wishes/fetchWishes", async () => {
-  const res = await api.get("/wishes");
+  Wish[],
+  void,
+  { state: any }
+>("wishes/fetchWishes", async (_, { getState, rejectWithValue }) => {
+  const state = getState();
+  const token = state.auth?.token;
+
+  if (!token) {
+    return rejectWithValue("No auth token");
+  }
+
+  const res = await api.get("/wishes", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
   return res.data.data;
 });
+
 
 /* ================= SLICE ================= */
 
