@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use("/api/wishes", wishRoutes);
-app.use("/videos", express.static("uploads/videos"));
+app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/otp", otpRoutes);
 

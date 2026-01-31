@@ -3,12 +3,14 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = async (req, res, next) => {
   try {
+        console.log("AUTH HEADER:", req.headers.authorization);
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
-
+    
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -19,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
     //   return res.status(401).json({ message: "User not found" });
     // }
 
-    req.user = decoded; // 🔥 very important
+    req.user = { id: decoded.id }; // 🔥 very important
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });

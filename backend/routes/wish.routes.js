@@ -1,18 +1,12 @@
 import express from "express";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc.js";
-import timezone from "dayjs/plugin/timezone.js";
-import Wish from "../models/wish.model.js";
-import authMiddleware from "../middlewares/auth.middleware.js"
+import multer from "multer";
+import authMiddleware from "../middlewares/auth.middleware.js";
 import {
   createWish,
   getMyWishes,
+  updateWish,
+  deleteWish
 } from "../controllers/wish.controller.js";
-import multer from "multer";
-
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const router = express.Router();
 
@@ -29,61 +23,23 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* ================= POST : CREATE WISH ================= */
+/* ================= ROUTES ================= */
 
-router.post("/", upload.single("video"), async (req, res) => {
-  try {
-    const { receiverEmail, message, date, time } = req.body;
+// 🔐 Create wish
+router.post(
+  "/",
+  authMiddleware,
+  upload.single("video"),
+  createWish
+);
 
-    const videoUrl = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/videos/${req.file.filename}`
-      : "";
-
-    const istDateTime = dayjs.tz(`${date} ${time}`, "Asia/Kolkata");
-    const sendAtUtc = istDateTime.utc().toDate();
-
-    const wish = await Wish.create({
-      receiverEmail,
-      message,
-      videoUrl,
-      sendAtUtc,
-      timezone: "Asia/Kolkata",
-      status: "PENDING",
-    });
-
-    res.status(201).json({
-      success: true,
-      data: wish,
-    });
-  } catch (error) {
-    console.error("Wish create error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-});
-
-/* ================= GET : ALL WISHES ================= */
-
-router.get("/", async (req, res) => {
-  try {
-    const wishes = await Wish.find().sort({ sendAtUtc: 1 });
-
-    res.json({
-      success: true,
-      data: wishes,
-    });
-  } catch (error) {
-    console.error("Fetch wishes error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-});
-
-router.post("/", authMiddleware, createWish);   // 🔐
+// 🔐 Get logged-in user's wishes
 router.get("/", authMiddleware, getMyWishes);
+
+// ✏️ Update wish
+router.put("/:id", authMiddleware, upload.single("video"), updateWish);
+
+// 🗑 Delete wish
+router.delete("/:id", authMiddleware, deleteWish);
 
 export default router;

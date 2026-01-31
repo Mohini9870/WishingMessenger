@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const wishSchema = new mongoose.Schema(
   {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     receiverEmail: { type: String, required: true },
     message: { type: String, required: true },
     videoUrl: { type: String },
