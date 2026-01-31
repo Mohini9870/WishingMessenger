@@ -29,26 +29,38 @@ export default function RegisterScreen() {
   const handleSendOtp = async () => {
     if (!email) return Alert.alert("Enter email");
 
-    await dispatch(sendOtp({ email }));
+    try {
+    await dispatch(sendOtp({ email })).unwrap();
     setOtpSent(true);
     Alert.alert("OTP sent to email");
+  } catch (err) {
+    Alert.alert("Failed to send OTP");
+  }
   };
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
       return Alert.alert("Passwords do not match");
     }
-
-    await dispatch(
+   try{
+    const res =await dispatch(
       verifyOtpAndRegister({
         email,
         otp,
         password,
       })
-    );
+    ).unwrap();
 
+
+   if (res.success) {   // ✅ server response me success field check karo
     Alert.alert("Account created 🎉");
     router.replace("/login");
+  } else {
+    Alert.alert(res.message || "Invalid OTP or Registration failed");
+  }
+  }catch(error : any){
+    Alert.alert(error?.message || "Invalid OTP or Registration failed");
+  }
   };
 
   return (

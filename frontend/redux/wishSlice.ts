@@ -1,17 +1,16 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "../services/api";
+import { getToken } from "@/services/tokenStorage";
 
 /* ================= TYPES ================= */
 
-
-
-
 export interface Wish {
-    _id: string;             // MongoDB id
+  _id: string;
   receiverEmail: string;
   message: string;
-  videoUrl?: string;   // Backend video URL
-  sendAtUtc: string;    // Backend UTC datetime
+  videoUrl?: string;
+  sendAtUtc: string;
+  status?: "PENDING" | "SENT" | "FAILED";
 }
 
 export interface AddWishInput {
@@ -19,7 +18,7 @@ export interface AddWishInput {
   message: string;
   date: string;
   time: string;
-  videoUri?: string; // 👈 mobile ka video
+  videoUri?: string;
 }
 
 interface WishState {
@@ -36,55 +35,43 @@ const initialState: WishState = {
 
 /* ================= ASYNC THUNKS ================= */
 
-export const addWish = createAsyncThunk<
-  Wish,            // backend se jo aayega
-  AddWishInput     // frontend se jo bhejenge
->("wishes/addWish", async (payload) => {
-  const formData = new FormData();
+// ➕ ADD WISH
+export const addWish = createAsyncThunk<Wish, AddWishInput>(
+  "wishes/add",
+  async (payload) => {
+    const formData = new FormData();
 
-  formData.append("receiverEmail", payload.receiverEmail);
-  formData.append("message", payload.message);
-  formData.append("date", payload.date);
-  formData.append("time", payload.time);
+    formData.append("receiverEmail", payload.receiverEmail);
+    formData.append("message", payload.message);
+    formData.append("date", payload.date);
+    formData.append("time", payload.time);
 
-  if (payload.videoUri) {
-    const fileName = payload.videoUri.split("/").pop()!;
-    formData.append("video", {
-      uri: payload.videoUri,
-      type: "video/mp4",
-      name: fileName,
-    } as any);
+    if (payload.videoUri) {
+      const fileName = payload.videoUri.split("/").pop()!;
+      formData.append("video", {
+        uri: payload.videoUri,
+        type: "video/mp4",
+        name: fileName,
+      } as any);
+    }
+    const token = await getToken();
+    const res = await api.post("/wishes", formData, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+    })
+
+
+    return res.data.data; // 👈 backend se new wish
   }
+);
 
-  const res = await api.post("/wishes", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-
-  return res.data.data;   // Must contain _id, sendAtUtc, videoUrl
-});
-
-
-export const fetchWishes = createAsyncThunk<
-  Wish[],
-  void,
-  { state: any }
->("wishes/fetchWishes", async (_, { getState, rejectWithValue }) => {
-  const state = getState();
-  const token = state.auth?.token;
-
-  if (!token) {
-    return rejectWithValue("No auth token");
+// 📄 FETCH MY WISHES
+export const fetchWishes = createAsyncThunk<Wish[]>(
+  "wishes/fetch",
+  async () => {
+    const res = await api.get("/wishes");
+    return res.data.data;
   }
-
-  const res = await api.get("/wishes", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return res.data.data;
-});
-
+);
 
 /* ================= SLICE ================= */
 
@@ -94,23 +81,34 @@ const wishSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // ADD
       .addCase(addWish.pending, (state) => {
         state.loading = true;
       })
       .addCase(addWish.fulfilled, (state, action: PayloadAction<Wish>) => {
         state.loading = false;
-        state.list.unshift(action.payload); // ✅ no TS error
+        state.list.unshift(action.payload);
       })
       .addCase(addWish.rejected, (state) => {
         state.loading = false;
       })
+
+      // FETCH
+      .addCase(fetchWishes.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchWishes.fulfilled, (state, action: PayloadAction<Wish[]>) => {
+        state.loading = false;
         state.list = action.payload;
+      })
+      .addCase(fetchWishes.rejected, (state) => {
+        state.loading = false;
       });
   },
 });
 
 export default wishSlice.reducer;
+
 
 
 

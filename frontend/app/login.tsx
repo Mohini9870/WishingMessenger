@@ -11,26 +11,34 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
-import api from "../services/api";
+import { useDispatch } from "react-redux";
+import { loginUser } from "@/redux/authSlice";
+
 
 export default function LoginScreen() {
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const login = async () => {
-    try {
-      const res = await api.post("/auth/login", {
+  const dispatch = useDispatch<any>();
+
+const login = async () => {
+  try {
+    await dispatch(
+      loginUser({
         email: emailOrMobile,
         password,
-      });
+      })
+    ).unwrap();
 
-      Alert.alert("Success", "Logged in");
-      router.replace({ pathname: "/(tabs)" });
-    } catch (err: any) {
-      Alert.alert("Login Failed", "Invalid credentials");
-    }
-  };
+    Alert.alert("Success", "Logged in");
+    router.replace("/(tabs)");
+  } catch (err) {
+    Alert.alert("Login Failed", "Invalid credentials");
+  }
+};
+
+  
 
   return (
     <KeyboardAvoidingView

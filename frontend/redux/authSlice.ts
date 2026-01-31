@@ -1,7 +1,29 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api, {setAuthToken} from "../services/api";
+import { createSlice, createAsyncThunk,  } from "@reduxjs/toolkit";
+import api from "../services/api";
 import { saveToken, deleteToken } from "@/services/tokenStorage";
+import { setAuthToken } from "../services/api";
 
+/* =====================
+   LOGIN
+===================== */
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (data: { email: string; password: string }) => {
+    const res = await api.post("/auth/login", data);
+    return res.data;
+  }
+);
+
+/* =====================
+   FETCH ME
+===================== */
+export const fetchMe = createAsyncThunk(
+  "auth/me",
+  async () => {
+    const res = await api.get("/auth/me");
+    return res.data.user;
+  }
+);
 
 /* =====================
    SEND OTP
@@ -18,68 +40,35 @@ export const sendOtp = createAsyncThunk(
    VERIFY OTP + REGISTER
 ===================== */
 export const verifyOtpAndRegister = createAsyncThunk(
-  "auth/verifyOtp",
+  "auth/register",
   async (data: { email: string; otp: string; password: string }) => {
     const res = await api.post("/auth/verify-otp", data);
     return res.data;
   }
 );
 
-/* =====================
-   LOGIN
-===================== */
-export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (data: { email: string; password: string }) => {
-    const res = await api.post("/auth/login", data);
-    return res.data;
-  }
-);
 
-/* =====================
-   FETCH LOGGED IN USER
-===================== */
-export const fetchMe = createAsyncThunk(
-  "auth/me",
-  async (_, { getState }) => {
-    const state: any = getState();
-    const token = state.auth.token;
-
-    const res = await api.get("/auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    return res.data.user;
-  }
-);
-
-/* =====================
-   SLICE
-===================== */
 const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: null as any,
     token: null as string | null,
     loading: false,
+    bootstrapped: false, // ⭐ VERY IMPORTANT
   },
   reducers: {
-    setToken : (state, action)=>{
+    restoreToken: (state, action) => {
       state.token = action.payload;
-    },
-    tokenRestored: (state, action) => {
-      state.token = action.payload;
-      state.loading = false;
-      setAuthToken(action.payload);
+      state.bootstrapped = true;
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
-      setAuthToken(null); 
-       deleteToken();
+      state.loading = false;
+      deleteToken();
+      setAuthToken(null);
     },
+
   },
   extraReducers: (builder) => {
     builder
@@ -91,8 +80,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        setAuthToken(action.payload.token);
+
         saveToken(action.payload.token);
+         setAuthToken(action.payload.token);
       })
       .addCase(loginUser.rejected, (state) => {
         state.loading = false;
@@ -108,15 +98,17 @@ const authSlice = createSlice({
       })
       .addCase(fetchMe.rejected, (state) => {
         state.loading = false;
-        state.user = null;
-        state.token = null;
-        deleteToken();
+        //  token clear mat karo
       });
+     
   },
 });
+// async thunks
 
-export const { logout, tokenRestored, setToken } = authSlice.actions;
+export const { logout, restoreToken} = authSlice.actions;
+
 export default authSlice.reducer;
+
 
 
 
